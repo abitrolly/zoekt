@@ -66,8 +66,8 @@ func (s *typeRepoSearcher) List(ctx context.Context, r query.Q, opts *zoekt.List
 	defer func() {
 		if rl != nil {
 			tr.LazyPrintf("repos size: %d", len(rl.Repos))
+			tr.LazyPrintf("reposmap size: %d", len(rl.ReposMap))
 			tr.LazyPrintf("crashes: %d", rl.Crashes)
-			tr.LazyPrintf("minimal size : %d", len(rl.Minimal))
 		}
 		if err != nil {
 			tr.LazyPrintf("error: %v", err)

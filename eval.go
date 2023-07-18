@@ -482,7 +482,7 @@ func (d *indexData) scoreFileUsingBM25(fileMatch *FileMatch, doc uint32, cands [
 	// bytes should work fine, as we're just computing a ratio.
 	fileLength := float64(d.boundaries[doc+1] - d.boundaries[doc])
 	numFiles := len(d.boundaries)
-	averageFileLength := float64(d.boundaries[numFiles - 1]) / float64(numFiles)
+	averageFileLength := float64(d.boundaries[numFiles-1]) / float64(numFiles)
 	L := fileLength / averageFileLength
 
 	// Use standard parameter defaults (used in Lucene and academic papers)
@@ -492,7 +492,7 @@ func (d *indexData) scoreFileUsingBM25(fileMatch *FileMatch, doc uint32, cands [
 	for _, freq := range termFreqs {
 		tf := float64(freq)
 		sumTf += tf
-		score += ((k + 1.0) * tf) / (k * (1.0 - b + b * L) + tf)
+		score += ((k + 1.0) * tf) / (k*(1.0-b+b*L) + tf)
 	}
 
 	fileMatch.addKeywordScore(score, sumTf, L, opts.DebugScore)
@@ -689,8 +689,6 @@ func (d *indexData) List(ctx context.Context, q query.Q, opts *ListOptions) (rl 
 	switch field {
 	case RepoListFieldRepos:
 		l.Repos = make([]*RepoListEntry, 0, len(d.repoListEntry))
-	case RepoListFieldMinimal:
-		l.Minimal = make(map[uint32]*MinimalRepoListEntry, len(d.repoListEntry))
 	case RepoListFieldReposMap:
 		l.ReposMap = make(ReposMap, len(d.repoListEntry))
 	}
@@ -715,12 +713,6 @@ func (d *indexData) List(ctx context.Context, q query.Q, opts *ListOptions) (rl 
 		switch field {
 		case RepoListFieldRepos:
 			l.Repos = append(l.Repos, rle)
-		case RepoListFieldMinimal:
-			l.Minimal[rle.Repository.ID] = &MinimalRepoListEntry{
-				HasSymbols:    rle.Repository.HasSymbols,
-				Branches:      rle.Repository.Branches,
-				IndexTimeUnix: rle.IndexMetadata.IndexTime.Unix(),
-			}
 		case RepoListFieldReposMap:
 			l.ReposMap[rle.Repository.ID] = MinimalRepoListEntry{
 				HasSymbols:    rle.Repository.HasSymbols,
@@ -733,7 +725,7 @@ func (d *indexData) List(ctx context.Context, q query.Q, opts *ListOptions) (rl 
 
 	// Only one of these fields is populated and in all cases the size of that
 	// field is the number of Repos in this shard.
-	l.Stats.Repos = len(l.Repos) + len(l.Minimal) + len(l.ReposMap)
+	l.Stats.Repos = len(l.Repos) + len(l.ReposMap)
 
 	return &l, nil
 }

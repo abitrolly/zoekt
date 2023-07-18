@@ -904,8 +904,8 @@ func (ss *shardedSearcher) List(ctx context.Context, r query.Q, opts *zoekt.List
 		metricListRunning.Dec()
 		if rl != nil {
 			tr.LazyPrintf("repos size: %d", len(rl.Repos))
+			tr.LazyPrintf("reposmap size: %d", len(rl.ReposMap))
 			tr.LazyPrintf("crashes: %d", rl.Crashes)
-			tr.LazyPrintf("minimal size: %d", len(rl.Minimal))
 		}
 		if err != nil {
 			tr.LazyPrintf("error: %v", err)
@@ -955,7 +955,6 @@ func (ss *shardedSearcher) List(ctx context.Context, r query.Q, opts *zoekt.List
 
 	agg := zoekt.RepoList{
 		Crashes:  stillLoadingCrashes,
-		Minimal:  map[uint32]*zoekt.MinimalRepoListEntry{},
 		ReposMap: zoekt.ReposMap{},
 	}
 
@@ -980,15 +979,11 @@ func (ss *shardedSearcher) List(ctx context.Context, r query.Q, opts *zoekt.List
 			}
 		}
 
-		for id, r := range r.rl.Minimal {
-			_, ok := agg.Minimal[id]
-			if !ok {
-				agg.Minimal[id] = r
-			}
-		}
-
 		for id, r := range r.rl.ReposMap {
-			agg.ReposMap[id] = r
+			_, ok := agg.ReposMap[id]
+			if !ok {
+				agg.ReposMap[id] = r
+			}
 		}
 	}
 
@@ -1002,7 +997,7 @@ func (ss *shardedSearcher) List(ctx context.Context, r query.Q, opts *zoekt.List
 	//
 	// Note: we don't just add individual Stats.Repos since a repository can
 	// have multiple shards.
-	agg.Stats.Repos = len(uniq) + len(agg.Minimal) + len(agg.ReposMap)
+	agg.Stats.Repos = len(uniq) + len(agg.ReposMap)
 
 	if isAll && len(agg.Repos) > 0 {
 		reportListAllMetrics(agg.Repos)
